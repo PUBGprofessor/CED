@@ -29,6 +29,7 @@ def isNone(LTT:LTTextLineHorizontal) -> bool:
     return True
 
 def isSameStyle(LTL1:LTTextLineHorizontal, LTL2:LTTextLineHorizontal, page:LTPage) -> bool:
+    # 判断两行是否为同一段落
     if LTL1.isCenter(page.x0, page.x1, page.left_begin):
         return LTL2.isCenter(page.x0, page.x1, page.left_begin) and \
             LTL1.fontname == LTL2.fontname and \
@@ -39,4 +40,4 @@ def isSameStyle(LTL1:LTTextLineHorizontal, LTL2:LTTextLineHorizontal, page:LTPag
             LTL1.fontname == LTL2.fontname and \
             LTL1.fontsize == LTL2.fontsize and \
             LTL1.linewidth == LTL2.linewidth and \
-            LTL2.isFullOut(page.left_begin)
+            LTL2.isFullOut(page.left_begin) # 顶格

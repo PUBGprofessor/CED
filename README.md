@@ -5,6 +5,7 @@
 - **pdfminer.six** 指定版本
 - **interval = 1.0.0**
 - **python >= 3.10**
+- **pytorch**
 
 ```bash
 conda create -n CED python=3.10
@@ -20,68 +21,51 @@ pip install git+https://github.com/PUBGprofessor/pdfminer.six.git
 
 ## RUN：
 
+### 1.基于规则的目录提取：
+
 ```bash
 python .\main.py -d 281834793.pdf -o output\281834793.txt
 ```
 
+output\281834793.txt的每行内容为：
 
+"degree_rules, fontsize, fontname,linewidth,left(左端),center(中点),width(字块所占宽度),height(字块所占高度), pageid, 文本" 
 
-## 处理流程：
+### 2. 提取PDF特征到txt，默认目录设为0：
 
-1. 删除图像√
+```bash
+python .\main.py -d 281834793.pdf -o output\281834793.txt --x
+```
 
-2. 删除页眉页脚√
+output\281834793.txt的每行内容为：
 
-3. 获取正文的左右边界√
+"0, fontsize, fontname,linewidth,left(左端),center(中点),width(字块所占宽度),height(字块所占高度), pageid, 文本" 
 
-4. LTTextBox全部转为LTTexLine√
+### 3. 自动提取pdf自带目录：
 
-5. 删除表格及内容（使用横纵覆盖范围）√
+```
+python .\mulu.py -p 281834793.pdf -t output\281834793.txt -o output\281834793_self.txt
+```
 
-6. //横页坐标等比例缩放 ？？
+其中，281834793.pdf为原pdf文件， output\281834793.txt为1或2步得到的txt特征文件，output\281834793_self.txt为pdf自带的正确目录，格式仍为：
 
-7. //字块分割
+"degree_self, fontsize, fontname,linewidth,left(左端),center(中点),width(字块所占宽度),height(字块所占高度), pageid, 文本" 
 
-8. //页面整合为一页
+### 4. 将上面得到的特征txt转换为目录txt：
 
-​		a)    //去页眉页脚
+```
+python .\txt_convert.py -i output\281834793.txt -o output\281834793_.txt
+```
 
-9. 属性添加：√
+output\281834793_.txt内容为：
 
-（1）   字体，字号，线宽√
+> 一、2023 年年度主要财务数据和指标 **\**1
+> 二、业绩泄漏原因分析 **\**1
+> (一）公司出现业绩提前泄漏 **2
 
-（2）   是否顶格（）√
+### 5. 多进程并行处理大量文件：
 
-（3）   是否居中（左端顶格或Tab不认为居中）√
+```bash
+python cowokers.py
+```
 
-（4）   是否开头Tab √
-
-（5）   末尾是否顶格√
-
-10. 段落合并√
-
-​	对于段落（左对齐）：
-
-（1）   一元素的末尾接近页面最右侧
-
-（2）   下一个元素开头接近页面最左侧
-
-（3）   两元素字体字号线宽相同
-
-​	对于标题（居中）：
-
-（1）   //一元素的末尾为非换行符
-
-（2）   下一个元素居中
-
-（3）   两元素字体字号线宽相同
-
-11. 开始递归：
-
-​	a)谁先出现就是谁
-
-​	b)判断两相邻标题之间是否有元素：通过判断其之间的距离大于一行字距
-
-​	c)找到第一个标题后，继续找位置、线宽相同的标题，不考虑序号
-
-​	d)第几节 > 一、 > (一) = （一）> 1.  > (1) = （1）> 1) = ① > 无序号

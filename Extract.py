@@ -2,12 +2,15 @@ from pdfminer.layout import LTChar, LTPage, LTTextBox
 
 
 def put(Box: LTTextBox, degree: int, fp) -> None:
-    fp.write("p"+str(Box.pageid)+' ')
-    for line in Box:
-        for i in line:
-            if isinstance(i, LTChar):
-                fp.write(i.get_text())
-    fp.write('**'+str(degree)+'\n')  # Box.fontname, Box.fontsize, Box.linewidth
+    # fp.write("p"+str(Box.pageid)+' ')
+    # for line in Box:
+    #     for i in line:
+    #         if isinstance(i, LTChar):
+    #             fp.write(i.get_text())
+    LTB = Box
+    text = LTB.get_text().replace('\n', '').replace(',', ' ')
+    # text = LTB.get_text()[:4].replace('\n', '').replace(',', ' ')
+    fp.write(f"{degree},{LTB.get_fontsize()},{LTB.get_fontname().replace(',', ' ')},{LTB.get_linewidth()},{LTB.left},{LTB.center},{LTB.get_width()},{LTB.get_height()},{LTB.pageid},{text}\n")  # Box.fontname, Box.fontsize, Box.linewidth
 
 
 Catalog_list = ['一、', '(一', '（一', '一)', '一）', '1、', '1.', '(1', '（1', '1)', '1）']
@@ -89,21 +92,23 @@ def ExtraCatalog(PageList: list[LTPage], fp) -> None:
                 """遍历两个父级标题之间的Box"""
                 for Box in PageList[pageid-1]:
                     if (Box.pageid != BL[i].pageid or Box.y0 < BL[i].y0) and \
-                        (Box.pageid != BL[i+1].pageid or Box.y0 > BL[i+1].y0):
-                        if count == 0:
+                        (Box.pageid != BL[i+1].pageid or Box.y0 > BL[i+1].y0): # 在两个标题之间的Box
+                        if count == 0: # 还没有找到第一个标题
                             t = isCatalog_1(Box)
                             if t:
                                 degree_list.append(Box)
                                 count += 1
+                            else:
+                                put(Box, 0, fp)
                         elif isSameDegree(t, degree_list[0], Box, PageList[degree_list[0].pageid-1].left_begin,
                                           PageList[pageid-1].left_begin):
-                            if degree_list[count-1].pageid == Box.pageid and degree_list[count-1].y0 - Box.y1 < Box.fontsize:
-                                """两标题距离过近，则不认为是标题"""
-                                degree_list.clear()
-                                count = 0
-                            else:
-                                degree_list.append(Box)
-                                count += 1
+                            # if degree_list[count-1].pageid == Box.pageid and degree_list[count-1].y0 - Box.y1 < Box.fontsize:
+                            #     """两标题距离过近，则不认为是标题"""
+                            #     degree_list.clear()
+                            #     count = 0
+                            # else:
+                            degree_list.append(Box)
+                            count += 1
                         else:
                             pass
             if len(degree_list) > 0:  # 有可提取的目录
@@ -112,13 +117,16 @@ def ExtraCatalog(PageList: list[LTPage], fp) -> None:
 
     pageNumb = len(PageList)
     # pre = LTTextBox() #第一遍递归时，前一个元素LTTextBox设为空的
-    frist_list = []
+    first_list = []
     for pageid in range(1, pageNumb+1):
         for Box in PageList[pageid-1]:
             if Box.isCenter(PageList[pageid-1].x0, PageList[pageid-1].x1, PageList[pageid-1].left_begin) and Box.linewidth > 0 and Box.fontsize > 10.56:
-                frist_list.append(Box)
+                first_list.append(Box)
+            if len(first_list) == 0: 
+                put(Box, 0, fp)
             last_Box = Box
-    frist_list.append(last_Box)
-    subExtra(frist_list, 1, fp)
+    first_list.append(last_Box) # 保留最后一个Box，标记结尾
+    subExtra(first_list, 1, fp)
+    put(first_list[-1], 0, fp) # 最后一个Box也要输出
 
 

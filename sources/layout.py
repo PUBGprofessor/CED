@@ -245,6 +245,16 @@ class LTCurve(LTComponent):
     def get_pts(self) -> str:
         return ",".join("%.3f,%.3f" % p for p in self.pts)
 
+    def get_fontname(self):
+        return 
+    
+    def get_fontsize(self):
+        return
+    
+    def get_linewidth(self):
+        return
+
+
 
 class LTLine(LTCurve):
     """A single straight line.
@@ -336,6 +346,17 @@ class LTImage(LTComponent):
             bbox2str(self.bbox),
             self.srcsize,
         )
+    
+    def get_fontname(self):
+        return 
+    
+    def get_fontsize(self):
+        return
+    
+    def get_linewidth(self):
+        return
+
+
 
 
 class LTAnno(LTItem, LTText):
@@ -352,6 +373,16 @@ class LTAnno(LTItem, LTText):
 
     def get_text(self) -> str:
         return self._text
+    
+    def get_fontname(self):
+        return 
+    
+    def get_fontsize(self):
+        return
+    
+    def get_linewidth(self):
+        return
+
 
 
 class LTChar(LTComponent, LTText):
@@ -429,6 +460,27 @@ class LTChar(LTComponent, LTText):
     def is_compatible(self, obj: object) -> bool:
         """Returns True if two characters can coexist in the same line."""
         return True
+    
+    def get_fontname(self) -> str:
+        """
+        自己加的方法：
+        直接获得
+        """
+        return self.fontname
+    
+    def get_fontsize(self) -> float:
+        """
+        自己加的方法：
+        直接获得
+        """
+        return self.fontsize
+    
+    def get_linewidth(self) -> float:
+        """
+        自己加的方法：
+        直接获得
+        """
+        return float(self.graphicstate.linewidth)
 
 
 LTItemT = TypeVar("LTItemT", bound=LTItem)
@@ -461,6 +513,46 @@ class LTContainer(LTComponent, Generic[LTItemT]):
         for obj in self._objs:
             obj.analyze(laparams)
         return
+    
+    def get_fontname(self) -> str:
+        """
+        自己加的方法：
+        获取Line包含的Char中数量最多的属性：
+        fontname, fontsize, linewidth, fontwidth
+        用于给self.---赋值
+        :return: None
+        """
+        fontnamelist = []
+        for ch in self:
+            fontnamelist.append(ch.get_fontname())
+        fontname = max(fontnamelist, key=fontnamelist.count)
+        return fontname if fontname else " "
+
+    def get_fontsize(self) -> float:
+        """
+        自己加的方法：
+        获取Line包含的Char中数量最多的属性：
+        fontname, fontsize, linewidth, fontwidth
+        用于给self.---赋值
+        :return: None
+        """
+        fontsizelist = []
+        for ch in self:
+            fontsizelist.append(ch.get_fontsize())
+        return max(fontsizelist, key=fontsizelist.count)
+    
+    def get_linewidth(self) -> float:
+        """
+        自己加的方法：
+        获取Line包含的Char中数量最多的属性：
+        fontname, fontsize, linewidth, fontwidth
+        用于给self.---赋值
+        :return: None
+        """
+        linewidthlist = []
+        for ch in self:
+            linewidthlist.append(ch.get_linewidth())
+        return max(linewidthlist, key=linewidthlist.count)
 
 
 class LTExpandableContainer(LTContainer[LTItemT]):
@@ -482,15 +574,25 @@ class LTExpandableContainer(LTContainer[LTItemT]):
         )
         return
 
+    def get_width(self) -> float:
+        return self.x1 - self.x0
+    
+    def get_height(self) -> float:
+        return self.y1 - self.y0
+
 
 class LTTextContainer(LTExpandableContainer[LTItemT], LTText):
     def __init__(self) -> None:
         LTText.__init__(self)
         LTExpandableContainer.__init__(self)
-        self.linewidth = 0  #默认线宽为0(正文线宽为0)，自己加的
+        self.linewidth = 0.0  #默认线宽为0(正文线宽为0)，自己加的
         self.fontsize = 10.56   #默认字体大小为10.56， 自己加的
         self.fontname = ' ' #默认字体名称为空，自己加的
+        self.left = 0.0 # 默认x0，自己加的
+        self.center = 0.0 # 默认中心点x，自己加的
         self.pageid = 0
+        self.top = 0.0 # 默认y1，自己加的
+        self.bottom = 0.0 # 默认y0，自己加的
         return
 
     def get_text(self) -> str:
@@ -511,17 +613,20 @@ class LTTextContainer(LTExpandableContainer[LTItemT], LTText):
         fontsizelist = []
         linewidthlist = []
         for ch in self:
-            if isinstance(ch, LTChar):
-                fontnamelist.append(ch.fontname)
-                fontsizelist.append(ch.fontsize)
-                linewidthlist.append(ch.graphicstate.linewidth)
-            elif isinstance(ch, LTTextLine):   #如果是LTTextline
-                fontnamelist.append(ch.fontname)
-                fontsizelist.append(ch.fontsize)
-                linewidthlist.append(ch.linewidth)
-        self.fontname = max(fontnamelist, key=fontnamelist.count)
-        self.fontsize = max(fontsizelist, key=fontsizelist.count)
-        self.linewidth = max(linewidthlist, key=linewidthlist.count)
+            fontnamelist.append(ch.get_fontname())
+            fontsizelist.append(ch.get_fontsize())
+            linewidthlist.append(ch.get_linewidth())
+            # if isinstance(ch, LTChar):
+            #     fontnamelist.append(ch.fontname)
+            #     fontsizelist.append(ch.fontsize)
+            #     linewidthlist.append(ch.graphicstate.linewidth)
+            # elif isinstance(ch, LTTextLine):   #如果是LTTextline
+            #     fontnamelist.append(ch.fontname)
+            #     fontsizelist.append(ch.fontsize)
+            #     linewidthlist.append(ch.linewidth)
+        self.fontname = max(fontnamelist, key=fontnamelist.count) if max(fontnamelist, key=fontnamelist.count) else " "
+        self.fontsize = max(fontsizelist, key=fontsizelist.count) if max(fontsizelist, key=fontsizelist.count) else 0.
+        self.linewidth = max(linewidthlist, key=linewidthlist.count) if max(linewidthlist, key=linewidthlist.count) else 0.
 
     def isFullOut(self, page_left_begin:float)->bool:
         """
