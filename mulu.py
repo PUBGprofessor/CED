@@ -17,6 +17,9 @@ def shared_prefix_ratio(title, text):
     计算 title 和 text 前 min(len(title), len(text)) 个字符中的最长前缀相同长度，
     返回其占 title 长度的比例（考虑顺序）。
     """
+    if (2 * len(title) < len(text)): # 特殊情况（可能把第二页的目录识别为一级目录：第一节。。。。）
+        return 0.0
+
     minlen = min(len(title), len(text))
     match_len = 0
     for i in range(minlen):

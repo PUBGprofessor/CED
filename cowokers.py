@@ -1,4 +1,4 @@
-import torch
+# import torch
 import torch.multiprocessing as mp
 from torch.utils.data.distributed import DistributedSampler
 from torch.utils.data import DataLoader
@@ -13,7 +13,7 @@ world_size = 2
 # fail_path = r"E:\pythonProject\failed_file.txt"
 dir_path = r"E:\pythonProject\工大目录抽取数据集"
 txt_path = r"E:\pythonProject\CED_txt\pdf_txt_old"
-output_path = r"E:\pythonProject\CED_txt\pdf_txt"
+output_path = r"E:\pythonProject\CED_txt\pdf_txt_new"
 fail_path = r"E:\pythonProject\failed_file.txt"
 
 def find_all_pdfs(root_dir):
